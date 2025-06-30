@@ -59,4 +59,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.coil.compose)
+    implementation("androidx.navigation:navigation-compose:2.5.3")
 }

@@ -17,23 +17,23 @@ object AppInfoUtils {
     fun getNonStoreInstalledApps(context: Context): List<String> {
         val nonStoreApps = mutableListOf<String>()
         val packageManager = context.packageManager
+        val currentPackageName = context.packageName  // ← 자기 패키지명
 
         val installedPackages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
 
         for (packageInfo in installedPackages) {
             val appInfo = packageInfo.applicationInfo
 
-            // 널(null) 체크: appInfo가 null이 아닌 경우에만 아래 로직을 실행합니다.
-            if (appInfo != null) { // <--- 이 줄을 추가합니다.
-                // 1. 시스템 앱은 제외
-                if ((appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0) {
-                    continue
-                }
+            if (appInfo != null) {
+                // 1. 시스템 앱 제외
+                if ((appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0) continue
 
-                // 2. 패키지 설치 소스를 확인합니다.
+                // 2. 자기 자신 제외
+                if (packageInfo.packageName == currentPackageName) continue
+
+                // 3. 설치 소스 확인
                 val installerPackageName = packageManager.getInstallerPackageName(packageInfo.packageName)
 
-                // installerPackageName이 null이거나 공식 스토어가 아니면 비공식 경로로 설치된 것으로 간주
                 if (installerPackageName == null || !isOfficialStore(installerPackageName)) {
                     nonStoreApps.add(packageInfo.packageName)
                 }
@@ -53,7 +53,10 @@ object AppInfoUtils {
             "com.android.vending", // Google Play Store
             "com.google.android.gms", // Google Play Services (Play Store와 관련됨)
             "com.sec.android.app.samsungapps", // Samsung Galaxy Store
-            "com.skt.skaf.A000Z00040" // One Store (원스토어)
+            "com.skt.skaf.A000Z00040", // One Store (원스토어)
+            "com.amazon.venezia", // Amazon Appstore
+            "com.xiaomi.market", // Xiaomi Store
+            "com.baidu.appsearch" // Baidu Store
         )
         return installerPackageName in officialStores
     }
