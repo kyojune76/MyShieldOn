@@ -20,7 +20,7 @@ class SecurityScanner(private val context: Context, private val config: Security
         val installedPackages = packageManager.getInstalledPackages(0)
 
         for (packageInfo in installedPackages) {
-            val appName = packageInfo.applicationInfo.loadLabel(packageManager).toString()
+            val appName = packageInfo.applicationInfo?.loadLabel(packageManager)?.toString() ?: "Unknown App"
             val packageName = packageInfo.packageName
             val issues = mutableListOf<SecurityIssue>()
 
