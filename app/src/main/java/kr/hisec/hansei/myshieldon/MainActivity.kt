@@ -40,7 +40,9 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             onGoBack = {
                                 viewModel.returnToIdle()
-                                navController.popBackStack()
+                                navController.navigate("main") {
+                                    popUpTo("main") { inclusive = true }
+                                }
                             }
                         )
                     }

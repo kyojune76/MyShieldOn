@@ -1,24 +1,27 @@
 package kr.hisec.hansei.myshieldon
 
+
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.util.Log
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
+
 class SecurityScanner(private val context: Context, private val config: SecurityConfig) {
 
-    /**
-     * 설치된 앱들을 스캔하여 보안 이슈가 있는 앱 목록을 반환합니다.
-     */
     suspend fun scanInstalledApps(): List<DetectedApp> {
         val detectedApps = mutableListOf<DetectedApp>()
         val packageManager = context.packageManager
         val installedPackages = packageManager.getInstalledPackages(0)
+
+        // 다운로드 폴더에 있는 APK 파일의 패키지명 추출
+        val downloadApkPackages = getDownloadedApkPackageNames()
 
         for (packageInfo in installedPackages) {
             val appName = packageInfo.applicationInfo?.loadLabel(packageManager)?.toString() ?: "Unknown App"
@@ -49,10 +52,9 @@ class SecurityScanner(private val context: Context, private val config: Security
                 Log.e("PermissionCheck", "$packageName 권한 확인 실패: ${e.message}")
             }
 
-            // 3. 다운로드 폴더 내 APK 존재 여부
-            val apkFiles = checkApkInDownloadFolder()
-            if (apkFiles.isNotEmpty()) {
-                issues.add(SecurityIssue.ApkInDownloadFolder(apkFiles))
+            // 3. 해당 앱이 다운로드 폴더에 있는 APK로 설치된 경우
+            if (packageName in downloadApkPackages) {
+                issues.add(SecurityIssue.InstalledFromDownloadedApk)
             }
 
             if (issues.isNotEmpty()) {
@@ -63,7 +65,6 @@ class SecurityScanner(private val context: Context, private val config: Security
         return detectedApps
     }
 
-    // 앱 서명 SHA-256 해시 추출
     private fun getAppSignature(packageName: String): String? {
         return try {
             val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -93,9 +94,28 @@ class SecurityScanner(private val context: Context, private val config: Security
         }
     }
 
-    // 다운로드 폴더 내 APK 파일 검색
-    private fun checkApkInDownloadFolder(): List<String> {
+    private fun getDownloadedApkPackageNames(): Set<String> {
         val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        return downloads?.listFiles()?.filter { it.extension == "apk" }?.map { it.name } ?: emptyList()
+        return downloads?.listFiles()
+            ?.filter { it.extension == "apk" }
+            ?.mapNotNull { getPackageNameFromApk(it) }
+            ?.toSet() ?: emptySet()
+    }
+
+    private fun getPackageNameFromApk(apkFile: File): String? {
+        return try {
+            val pm = context.packageManager
+            val info = pm.getPackageArchiveInfo(apkFile.absolutePath, 0)
+            info?.applicationInfo?.let {
+                if (Build.VERSION.SDK_INT >= 8) {
+                    it.sourceDir = apkFile.absolutePath
+                    it.publicSourceDir = apkFile.absolutePath
+                }
+            }
+            info?.packageName
+        } catch (e: Exception) {
+            Log.e("APKScan", "APK에서 패키지명 추출 실패: ${e.message}")
+            null
+        }
     }
 }

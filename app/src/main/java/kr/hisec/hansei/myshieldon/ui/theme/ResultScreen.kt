@@ -58,13 +58,17 @@ fun ResultScreen(
             is ScanUiState.Success -> {
                 val detected = (uiState as ScanUiState.Success).detectedApps
                 if (detected.isNotEmpty()) {
-                    Text("보안 위협 앱 목록", color = WarningRed, style = MaterialTheme.typography.titleMedium)
+                    ResultBox("다운로드 경로 설치 앱","총 ${detected.size}개 발견됨" )
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyColumn(modifier = Modifier.fillMaxWidth()) {
                         items(detected) { app -> DetectedAppCard(app) }
                     }
+                } else {
+                    // ✅ 위협이 없는 경우
+                    ResultBox("다운로드 경로 설치 앱","다운로드 경로에서 설치된 앱이 없습니다.")
                 }
             }
+
             is ScanUiState.Error -> Text("오류 발생: ${(uiState as ScanUiState.Error).message}", color = WarningRed)
             else -> Unit
         }
@@ -106,14 +110,22 @@ private fun DetectedAppCard(app: DetectedApp) {
                 when (issue) {
                     is SecurityIssue.DangerousPermissions ->
                         Text("  - 과도한 위험 권한 보유 (${issue.permissions.size}개)", color = WarningRed)
+
                     is SecurityIssue.TamperedSignature ->
                         Text("  - ★★★ 서명 변조 의심 ★★★", color = WarningRed, fontWeight = FontWeight.Bold)
+
                     is SecurityIssue.NonStoreInstallation ->
                         Text("  - 비공식 경로로 설치됨", color = WarningRed)
-                    is SecurityIssue.ApkInDownloadFolder ->
-                        Text("  - 다운로드 폴더에 APK 파일 존재 (${issue.apkFiles.size}개)", color = WarningRed)
+
+                    is SecurityIssue.InstalledFromDownloadedApk ->
+                        Text("  - 다운로드된 APK에서 설치된 앱으로 의심됨", color = WarningRed)
+
+                    // 필요 없다면 아래 항목 제거 가능
+                    // is SecurityIssue.ApkInDownloadFolder ->
+                    //     Text("  - 다운로드 폴더에 APK 파일 존재 (${issue.apkFiles.size}개)", color = WarningRed)
                 }
             }
+
         }
     }
 }
