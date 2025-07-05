@@ -12,7 +12,3 @@ data class DetectedApp(
     val issues: List<SecurityIssue>
 )
 
-sealed class SecurityIssue {
-    data class DangerousPermissions(val permissions: Set<String>) : SecurityIssue()
-    object TamperedSignature : SecurityIssue()
-}

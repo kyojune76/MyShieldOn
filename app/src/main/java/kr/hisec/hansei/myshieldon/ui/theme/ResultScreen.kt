@@ -43,7 +43,7 @@ fun ResultScreen(
         Text("점검 완료", style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(24.dp))
 
-        val isRooted      = (uiState as? ScanUiState.Success)?.isRooted ?: false
+        val isRooted = (uiState as? ScanUiState.Success)?.isRooted ?: false
         val nonStoreCount = (uiState as? ScanUiState.Success)?.nonStoreApps?.size ?: 0
 
         ResultBox("루팅여부", if (isRooted) "루팅된 디바이스입니다." else "루팅되지 않았습니다.")
@@ -108,6 +108,10 @@ private fun DetectedAppCard(app: DetectedApp) {
                         Text("  - 과도한 위험 권한 보유 (${issue.permissions.size}개)", color = WarningRed)
                     is SecurityIssue.TamperedSignature ->
                         Text("  - ★★★ 서명 변조 의심 ★★★", color = WarningRed, fontWeight = FontWeight.Bold)
+                    is SecurityIssue.NonStoreInstallation ->
+                        Text("  - 비공식 경로로 설치됨", color = WarningRed)
+                    is SecurityIssue.ApkInDownloadFolder ->
+                        Text("  - 다운로드 폴더에 APK 파일 존재 (${issue.apkFiles.size}개)", color = WarningRed)
                 }
             }
         }
