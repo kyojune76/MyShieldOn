@@ -46,11 +46,16 @@ fun ResultScreen(
         val isRooted = (uiState as? ScanUiState.Success)?.isRooted ?: false
         val nonStoreCount = (uiState as? ScanUiState.Success)?.nonStoreApps?.size ?: 0
 
-        ResultBox("루팅여부", if (isRooted) "루팅된 디바이스입니다." else "루팅되지 않았습니다.")
+        ResultBox(
+            "루팅여부",
+            if (isRooted) "루팅된 디바이스입니다." else "루팅되지 않았습니다.",
+            if (isRooted) WarningRed else SuccessGreen
+        )
         Spacer(modifier = Modifier.height(16.dp))
         ResultBox(
             "스토어 외 설치 앱",
-            if (nonStoreCount > 0) "총 $nonStoreCount 개의 앱이 설치되어 있습니다." else "스토어 외 앱이 없습니다."
+            if (nonStoreCount > 0) "총 $nonStoreCount 개의 앱이 설치되어 있습니다." else "스토어 외 앱이 없습니다.",
+            if (nonStoreCount > 0) WarningRed else SuccessGreen
         )
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -58,34 +63,44 @@ fun ResultScreen(
             is ScanUiState.Success -> {
                 val detected = (uiState as ScanUiState.Success).detectedApps
                 if (detected.isNotEmpty()) {
-                    ResultBox("다운로드 경로 설치 앱","총 ${detected.size}개 발견됨" )
+                    Text(
+                        "보안 위협 앱 목록",
+                        color = WarningRed,
+                        style = MaterialTheme.typography.titleMedium
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyColumn(modifier = Modifier.fillMaxWidth()) {
                         items(detected) { app -> DetectedAppCard(app) }
                     }
-                } else {
-                    // ✅ 위협이 없는 경우
-                    ResultBox("다운로드 경로 설치 앱","다운로드 경로에서 설치된 앱이 없습니다.")
                 }
             }
 
-            is ScanUiState.Error -> Text("오류 발생: ${(uiState as ScanUiState.Error).message}", color = WarningRed)
+            is ScanUiState.Error -> Text(
+                "오류 발생: ${(uiState as ScanUiState.Error).message}",
+                color = WarningRed
+            )
+
             else -> Unit
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onGoBack, modifier = Modifier.fillMaxWidth().height(48.dp)) {
+        Button(
+            onClick = onGoBack,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
             Text("다시 점검하기", fontSize = 18.sp)
         }
     }
 }
 
 @Composable
-private fun ResultBox(title: String, content: String) {
+private fun ResultBox(title: String, content: String, boxColor: Color) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFCCDAFF), shape = RoundedCornerShape(12.dp))
+            .background(boxColor.copy(alpha = 0.2f), shape = RoundedCornerShape(12.dp))
             .padding(16.dp)
     ) {
         Text(text = title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -104,7 +119,11 @@ private fun DetectedAppCard(app: DetectedApp) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("${app.appName} (${app.packageName})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                "${app.appName} (${app.packageName})",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
             Spacer(modifier = Modifier.height(8.dp))
             app.issues.forEach { issue ->
                 when (issue) {
@@ -115,17 +134,16 @@ private fun DetectedAppCard(app: DetectedApp) {
                         Text("  - ★★★ 서명 변조 의심 ★★★", color = WarningRed, fontWeight = FontWeight.Bold)
 
                     is SecurityIssue.NonStoreInstallation ->
-                        Text("  - 비공식 경로로 설치됨", color = WarningRed)
+                        Text("  - 스토어 외 앱 설치 확인됨", color = WarningRed)
+
+                    is SecurityIssue.ApkInDownloadFolder ->
+                        Text("  - 다운로드 폴더 내 APK ${issue.apkFiles.size}개 발견", color = WarningRed)
 
                     is SecurityIssue.InstalledFromDownloadedApk ->
-                        Text("  - 다운로드된 APK에서 설치된 앱으로 의심됨", color = WarningRed)
+                        Text("  - APK 파일에서 설치된 앱", color = WarningRed)
 
-                    // 필요 없다면 아래 항목 제거 가능
-                    // is SecurityIssue.ApkInDownloadFolder ->
-                    //     Text("  - 다운로드 폴더에 APK 파일 존재 (${issue.apkFiles.size}개)", color = WarningRed)
                 }
             }
-
         }
     }
 }

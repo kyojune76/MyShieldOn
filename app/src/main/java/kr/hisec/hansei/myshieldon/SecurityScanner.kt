@@ -62,6 +62,17 @@ class SecurityScanner(private val context: Context, private val config: Security
             }
         }
 
+        val apkFiles = checkApkInDownloadFolder()
+        if (apkFiles.isNotEmpty()) {
+            detectedApps.add(
+                DetectedApp(
+                    appName = "Download Folder",
+                    packageName = "local.download.apk",
+                    issues = listOf(SecurityIssue.ApkInDownloadFolder(apkFiles))
+                )
+            )
+        }
+
         return detectedApps
     }
 
@@ -118,4 +129,10 @@ class SecurityScanner(private val context: Context, private val config: Security
             null
         }
     }
+    fun checkApkInDownloadFolder(): List<String> {
+        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val apkFiles = downloadDir.listFiles { file -> file.extension == "apk" } ?: return emptyList()
+        return apkFiles.map { it.name }
+    }
+
 }
