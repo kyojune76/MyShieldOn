@@ -2,8 +2,6 @@ package kr.hisec.hansei.myshieldon.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,12 +28,10 @@ fun ResultScreen(
     onGoBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -61,10 +57,24 @@ fun ResultScreen(
 
         when (uiState) {
             is ScanUiState.Success -> {
-                val detected = (uiState as ScanUiState.Success).detectedApps
+                // 디버그용 테스트 데이터
+                val detected = listOf(
+                    DetectedApp(
+                        appName = "테스트 앱",
+                        packageName = "com.test.fake",
+                        issues = listOf(
+                            SecurityIssue.DangerousPermissions(setOf("CAMERA", "LOCATION")),
+                            SecurityIssue.TamperedSignature,
+                            SecurityIssue.NonStoreInstallation,
+                            SecurityIssue.ApkInDownloadFolder(listOf("example.apk", "test.apk")),
+                            SecurityIssue.InstalledFromDownloadedApk
+                        )
+                    )
+                )
+
                 if (detected.isNotEmpty()) {
                     Text(
-                        "보안 위협 앱 목록",
+                        "보안 위협 앱 목록 (디버그용)",
                         color = WarningRed,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -80,7 +90,12 @@ fun ResultScreen(
                 color = WarningRed
             )
 
-            else -> Unit
+            else -> {
+                Text(
+                    "알 수 없는 상태입니다: ${uiState::class.simpleName}",
+                    color = WarningRed
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -141,7 +156,6 @@ private fun DetectedAppCard(app: DetectedApp) {
 
                     is SecurityIssue.InstalledFromDownloadedApk ->
                         Text("  - APK 파일에서 설치된 앱", color = WarningRed)
-
                 }
             }
         }
