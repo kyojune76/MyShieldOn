@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kr.hisec.hansei.myshieldon.UsageStatsManagerUtil
 
 class ScanViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<ScanUiState>(ScanUiState.Idle)
@@ -41,11 +42,15 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
 
                 val scanner = SecurityScanner(getApplication(), config)
                 val detectedApps = scanner.scanInstalledApps()
+                val heavyCount = UsageStatsManagerUtil
+                    .getHeavyUsageApps(getApplication())
+                    .size
 
                 _uiState.value = ScanUiState.Success(
                     isRooted = isRooted,
                     nonStoreApps = nonStoreApps,
-                    detectedApps = detectedApps
+                    detectedApps = detectedApps,
+                    backgroundOverUsageCount = heavyCount
                 )
             } catch (e: Exception) {
                 _uiState.value = ScanUiState.Error("스캔 중 오류가 발생했습니다: ${e.message}")

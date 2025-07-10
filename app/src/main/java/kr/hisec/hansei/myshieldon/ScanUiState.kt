@@ -16,7 +16,8 @@ sealed class ScanUiState {
     data class Success(
         val isRooted: Boolean,
         val nonStoreApps: List<String>,
-        val detectedApps: List<DetectedApp>
+        val detectedApps: List<DetectedApp>,
+        val backgroundOverUsageCount: Int  // new!
     ) : ScanUiState()
 
     data class Error(val message: String) : ScanUiState()
