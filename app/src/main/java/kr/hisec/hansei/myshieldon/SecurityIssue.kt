@@ -9,6 +9,8 @@ sealed class SecurityIssue {
     // 기존: 파일명 기반
     data class ApkInDownloadFolder(val apkFiles: List<String>) : SecurityIssue()
 
+    data class OsSecurityPatchOutdated(val patchDate: String) : SecurityIssue()
+
     // 새로 추가된 설치 여부 기반 탐지
     object InstalledFromDownloadedApk : SecurityIssue()
 }

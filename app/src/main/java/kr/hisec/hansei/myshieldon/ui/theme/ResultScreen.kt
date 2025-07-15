@@ -14,13 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kr.hisec.hansei.myshieldon.ScanUiState
-import kr.hisec.hansei.myshieldon.ScanViewModel
-import kr.hisec.hansei.myshieldon.DetectedApp
-import kr.hisec.hansei.myshieldon.SecurityIssue
+import kr.hisec.hansei.myshieldon.*
 
 private val SuccessGreen = Color(0xFF4CAF50)
-private val WarningRed   = Color(0xFFD32F2F)
+private val WarningRed = Color(0xFFD32F2F)
 
 @Composable
 fun ResultScreen(
@@ -28,28 +25,17 @@ fun ResultScreen(
     onGoBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // 실제 Success 상태라면 이 부분을 viewModel.uiState 에서 꺼내고,
-    // 지금은 디버그용 샘플 데이터를 그대로 씁니다.
-    val detected = if (uiState is ScanUiState.Success) {
-        listOf(
-            DetectedApp(
-                appName = "테스트 앱",
-                packageName = "com.test.fake",
-                issues = listOf(
-                    SecurityIssue.DangerousPermissions(setOf("CAMERA", "LOCATION")),
-                    SecurityIssue.TamperedSignature,
-                    SecurityIssue.NonStoreInstallation,
-                    SecurityIssue.ApkInDownloadFolder(listOf("example.apk", "test.apk")),
-                    SecurityIssue.InstalledFromDownloadedApk
-                )
-            )
-        )
-    } else emptyList()
 
-    // 루팅/비스토어 카운트
     val isRooted = (uiState as? ScanUiState.Success)?.isRooted ?: false
     val nonStoreCount = (uiState as? ScanUiState.Success)?.nonStoreApps?.size ?: 0
-    val heavyCount     = (uiState as? ScanUiState.Success)?.backgroundOverUsageCount ?: 0
+    val heavyCount = (uiState as? ScanUiState.Success)?.backgroundOverUsageCount ?: 0
+
+    val allDetectedApps = (uiState as? ScanUiState.Success)?.detectedApps ?: emptyList()
+
+    // ✅ 운영체제 감지 앱은 따로 빼서 제일 위로
+    val osIssues = allDetectedApps.filter { it.packageName == "android" }
+    val otherIssues = allDetectedApps.filter { it.packageName != "android" }
+    val sortedApps = osIssues + otherIssues
 
     LazyColumn(
         modifier = Modifier
@@ -57,7 +43,6 @@ fun ResultScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // ── 헤더 및 결과 박스 ──
         item {
             Spacer(modifier = Modifier.height(60.dp))
             Text("점검 완료", style = MaterialTheme.typography.headlineLarge)
@@ -75,23 +60,12 @@ fun ResultScreen(
                 if (nonStoreCount > 0) WarningRed else SuccessGreen
             )
             Spacer(modifier = Modifier.height(16.dp))
-
             ResultBox(
                 "백그라운드 과다 사용 앱",
-                if (heavyCount > 0) "총 $heavyCount 개의 앱이 과다 사용되었습니다."
-                else "장시간 사용된 앱이 없습니다.",
+                if (heavyCount > 0) "총 $heavyCount 개의 앱이 과다 사용되었습니다." else "장시간 사용된 앱이 없습니다.",
                 if (heavyCount > 0) WarningRed else SuccessGreen
             )
             Spacer(modifier = Modifier.height(24.dp))
-
-            if (detected.isNotEmpty()) {
-                Text(
-                    "보안 위협 앱 목록 (디버그용)",
-                    color = WarningRed,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
 
             if (uiState is ScanUiState.Error) {
                 Text(
@@ -102,12 +76,11 @@ fun ResultScreen(
             }
         }
 
-        // ── 탐지된 앱 카드들 ──
-        items(detected) { app ->
+        // ✅ 운영체제 관련 이슈가 먼저 뜨도록 정렬
+        items(sortedApps) { app ->
             DetectedAppCard(app)
         }
 
-        // ── 맨 하단 버튼 ──
         item {
             Spacer(modifier = Modifier.height(24.dp))
             Button(
@@ -118,7 +91,6 @@ fun ResultScreen(
             ) {
                 Text("다시 점검하기", fontSize = 18.sp)
             }
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -140,8 +112,7 @@ private fun ResultBox(title: String, content: String, boxColor: Color) {
 @Composable
 private fun DetectedAppCard(app: DetectedApp) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
@@ -168,6 +139,9 @@ private fun DetectedAppCard(app: DetectedApp) {
 
                     is SecurityIssue.InstalledFromDownloadedApk ->
                         Text("  - APK 파일에서 직접 설치 감지됨", color = WarningRed)
+
+                    is SecurityIssue.OsSecurityPatchOutdated ->
+                        Text("  - 운영체제 보안 패치 오래됨 (${issue.patchDate})", color = WarningRed)
                 }
             }
         }

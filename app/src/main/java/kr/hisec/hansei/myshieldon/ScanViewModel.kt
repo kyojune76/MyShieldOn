@@ -1,14 +1,18 @@
 package kr.hisec.hansei.myshieldon
 
 import android.app.Application
+import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kr.hisec.hansei.myshieldon.UsageStatsManagerUtil
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ScanViewModel(application: Application) : AndroidViewModel(application) {
+
     private val _uiState = MutableStateFlow<ScanUiState>(ScanUiState.Idle)
     val uiState: StateFlow<ScanUiState> = _uiState
 
@@ -41,11 +45,29 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                 )
 
                 val scanner = SecurityScanner(getApplication(), config)
-                val detectedApps = scanner.scanInstalledApps()
+                val detectedApps = scanner.scanInstalledApps().toMutableList()
+
+                // 4. 백그라운드 과다 앱 수
                 val heavyCount = UsageStatsManagerUtil
                     .getHeavyUsageApps(getApplication())
                     .size
 
+                // 5. 운영체제 보안 패치 확인
+                val patchDate = getSecurityPatchDate()
+                val isPatchOld = isPatchOutdated(patchDate)
+                if (isPatchOld) {
+                    detectedApps.add(
+                        DetectedApp(
+                            appName = "운영체제",
+                            packageName = "android",
+                            issues = listOf(
+                                SecurityIssue.OsSecurityPatchOutdated(patchDate ?: "Unknown")
+                            )
+                        )
+                    )
+                }
+
+                // 최종 결과 전달
                 _uiState.value = ScanUiState.Success(
                     isRooted = isRooted,
                     nonStoreApps = nonStoreApps,
@@ -55,6 +77,28 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 _uiState.value = ScanUiState.Error("스캔 중 오류가 발생했습니다: ${e.message}")
             }
+        }
+    }
+
+    private fun getSecurityPatchDate(): String? {
+        return try {
+            Build.VERSION.SECURITY_PATCH
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun isPatchOutdated(dateStr: String?): Boolean {
+        if (dateStr == null) return true
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val patchDate = sdf.parse(dateStr) ?: return true
+            val today = Date()
+            val diff = today.time - patchDate.time
+            val thirtyDaysMillis = 30L * 24 * 60 * 60 * 1000
+            diff > thirtyDaysMillis
+        } catch (e: Exception) {
+            true
         }
     }
 
