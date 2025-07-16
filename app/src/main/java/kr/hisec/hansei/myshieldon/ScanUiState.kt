@@ -17,7 +17,11 @@ sealed class ScanUiState {
         val isRooted: Boolean,
         val nonStoreApps: List<String>,
         val detectedApps: List<DetectedApp>,
-        val backgroundOverUsageCount: Int  // new!
+        val backgroundOverUsageCount: Int,  // new!
+        val isDeveloperOptionsMenuEnabled: Boolean,      // ← 추가
+        val isDeveloperOptionsEnabled: Boolean,          // ← 추가
+        val isUnknownSourcesAllowed: Boolean,
+        val allowedUnknownSourceApps: List<String> = emptyList()
     ) : ScanUiState()
 
     data class Error(val message: String) : ScanUiState()

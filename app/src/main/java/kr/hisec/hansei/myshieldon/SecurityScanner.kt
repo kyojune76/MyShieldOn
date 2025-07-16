@@ -11,6 +11,9 @@ import java.io.File
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import android.provider.Settings
+import android.app.AppOpsManager
+
 
 
 class SecurityScanner(private val context: Context, private val config: SecurityConfig) {
@@ -133,6 +136,58 @@ class SecurityScanner(private val context: Context, private val config: Security
         val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val apkFiles = downloadDir.listFiles { file -> file.extension == "apk" } ?: return emptyList()
         return apkFiles.map { it.name }
+    }
+    /**
+     * 개발자 옵션 메뉴 활성화 여부
+     */
+    fun isDeveloperOptionsMenuEnabled(): Boolean = try {
+        Settings.Global.getInt(
+            context.contentResolver,
+            Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
+            0
+        ) == 1
+    } catch (e: Settings.SettingNotFoundException) {
+        false
+    }
+
+    /**
+     * ADB 모드(개발자 옵션) 활성화 여부
+     */
+    fun isDeveloperOptionsEnabled(): Boolean = try {
+        Settings.Global.getInt(
+            context.contentResolver,
+            Settings.Global.ADB_ENABLED,
+            0
+        ) == 1
+    } catch (e: Settings.SettingNotFoundException) {
+        false
+    }
+
+    /**
+     * 알 수 없는 출처 설치 허용 여부
+     */
+    fun isUnknownSourcesAllowed(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.packageManager.canRequestPackageInstalls()
+        } else {
+            Settings.Secure.getInt(
+                context.contentResolver,
+                Settings.Secure.INSTALL_NON_MARKET_APPS,
+                0
+            ) == 1
+        }
+    fun getAllowedUnknownSourceApps(): List<String> {
+        val pm = context.packageManager
+        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        return pm.getInstalledApplications(PackageManager.GET_META_DATA)
+            .filter { ai ->
+                appOps.checkOpNoThrow(
+                    "android:request_install_packages",
+                    ai.uid,
+                    ai.packageName
+                ) == AppOpsManager.MODE_ALLOWED
+            }
+            .map { it.packageName }
     }
 
 }

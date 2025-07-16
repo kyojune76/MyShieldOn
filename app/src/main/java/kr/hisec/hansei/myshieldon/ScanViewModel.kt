@@ -46,7 +46,32 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
 
                 val scanner = SecurityScanner(getApplication(), config)
                 val detectedApps = scanner.scanInstalledApps().toMutableList()
+                val allowedUnknownApps = scanner.getAllowedUnknownSourceApps()
 
+                // ① 개발자 옵션(ADB) 메뉴 활성화(잠재 위험)
+                if (scanner.isDeveloperOptionsMenuEnabled() && !scanner.isDeveloperOptionsEnabled()) {
+                    detectedApps += DetectedApp(
+                        appName    = "설정: 개발자 옵션(ADB)",
+                        packageName= "android.settings",
+                        issues     = listOf(SecurityIssue.DeveloperOptionsAvailable)
+                    )
+                }
+                // ② ADB 모드 비활성화
+                if (!scanner.isDeveloperOptionsEnabled()) {
+                    detectedApps += DetectedApp(
+                        appName    = "개발자 옵션(ADB)",
+                        packageName= "android.settings",
+                        issues     = listOf(SecurityIssue.DeveloperModeDisabled)
+                    )
+                }
+                // ③ 알 수 없는 출처 허용 여부
+                if (scanner.isUnknownSourcesAllowed()) {
+                    detectedApps += DetectedApp(
+                        appName    = "설정: 알 수 없는 출처",
+                        packageName= "android.settings",
+                        issues     = listOf(SecurityIssue.UnsafeUnknownSources)
+                    )
+                }
                 // 4. 백그라운드 과다 앱 수
                 val heavyCount = UsageStatsManagerUtil
                     .getHeavyUsageApps(getApplication())
@@ -72,7 +97,11 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                     isRooted = isRooted,
                     nonStoreApps = nonStoreApps,
                     detectedApps = detectedApps,
-                    backgroundOverUsageCount = heavyCount
+                    backgroundOverUsageCount = heavyCount,
+                    isDeveloperOptionsMenuEnabled = scanner.isDeveloperOptionsMenuEnabled(),
+                    isDeveloperOptionsEnabled     = scanner.isDeveloperOptionsEnabled(),
+                    isUnknownSourcesAllowed       = scanner.isUnknownSourcesAllowed(),
+                    allowedUnknownSourceApps = allowedUnknownApps
                 )
             } catch (e: Exception) {
                 _uiState.value = ScanUiState.Error("스캔 중 오류가 발생했습니다: ${e.message}")
