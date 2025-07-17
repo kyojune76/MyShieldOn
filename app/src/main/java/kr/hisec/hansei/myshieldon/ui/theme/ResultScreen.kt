@@ -81,13 +81,13 @@ fun ResultScreen(
             Spacer(Modifier.height(16.dp))
 
             ResultBox(
-                "비공식 출처 설치",
+                "출처 불분명한 앱 설치 허용",
                 if (success?.isUnknownSourcesAllowed == true) "허용되어 있습니다."
                 else "허용되어 있지 않습니다.",
                 if (success?.isUnknownSourcesAllowed == true) WarningRed else SuccessGreen
             )
 
-            if (success?.isUnknownSourcesAllowed == true) {
+            if (true) {
                 Spacer(Modifier.height(8.dp))
                 Box(
                     modifier = Modifier.fillMaxWidth(),
