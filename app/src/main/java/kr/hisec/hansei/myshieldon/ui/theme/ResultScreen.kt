@@ -79,7 +79,59 @@ fun ResultScreen(
                 if (success?.isDeveloperOptionsEnabled == true) WarningRed else SuccessGreen
             )
             Spacer(Modifier.height(16.dp))
-
+// 다운로드 APK 설치 앱
+            val downloadedApkIssues = allDetected.filter {
+                it.issues.any { issue -> issue is SecurityIssue.InstalledFromDownloadedApk }
+            }
+            ResultBox(
+                "다운로드 APK 설치 앱",
+                if (downloadedApkIssues.isEmpty()) "다운로드 APK 설치 앱 없음"
+                else "직접 설치된 APK 앱 감지됨 (${downloadedApkIssues.size}개)",
+                if (downloadedApkIssues.isEmpty()) SuccessGreen else WarningRed
+            )
+            if (downloadedApkIssues.isNotEmpty()) {
+                Spacer(Modifier.height(4.dp))
+                downloadedApkIssues.forEach {
+                    Text("• ${it.appName} (${it.packageName})", fontSize = 13.sp)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+// 위험 권한 보유 앱
+            val dangerousPermissionApps = allDetected.filter {
+                it.issues.any { issue -> issue is SecurityIssue.DangerousPermissions }
+            }
+            ResultBox(
+                "위험 권한 보유 앱",
+                if (dangerousPermissionApps.isEmpty()) "위험 권한 과다 앱 없음"
+                else "위험 권한 앱 감지됨 (${dangerousPermissionApps.size}개)",
+                if (dangerousPermissionApps.isEmpty()) SuccessGreen else WarningRed
+            )
+            if (dangerousPermissionApps.isNotEmpty()) {
+                Spacer(Modifier.height(4.dp))
+                dangerousPermissionApps.forEach { app ->
+                    val permSet = app.issues.filterIsInstance<SecurityIssue.DangerousPermissions>()
+                        .flatMap { it.permissions }
+                    Text("• ${app.appName}: ${permSet.joinToString()}", fontSize = 13.sp)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+// 앱 서명 무결성 검사
+            val tamperedSignatureApps = allDetected.filter {
+                it.issues.any { issue -> issue is SecurityIssue.TamperedSignature }
+            }
+            ResultBox(
+                "앱 서명 무결성",
+                if (tamperedSignatureApps.isEmpty()) "서명 무결성 이상 없음"
+                else "서명 변조 앱 감지됨 (${tamperedSignatureApps.size}개)",
+                if (tamperedSignatureApps.isEmpty()) SuccessGreen else WarningRed
+            )
+            if (tamperedSignatureApps.isNotEmpty()) {
+                Spacer(Modifier.height(4.dp))
+                tamperedSignatureApps.forEach {
+                    Text("• ${it.appName} (${it.packageName})", fontSize = 13.sp)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
             ResultBox(
                 "출처 불분명한 앱 설치 허용",
                 if (success?.isUnknownSourcesAllowed == true) "허용되어 있습니다."
