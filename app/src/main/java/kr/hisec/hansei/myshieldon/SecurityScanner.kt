@@ -1,52 +1,40 @@
 package kr.hisec.hansei.myshieldon
 
-
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.util.Log
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.MessageDigest
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
 import android.provider.Settings
 import android.app.AppOpsManager
 
-
-
 class SecurityScanner(private val context: Context, private val config: SecurityConfig) {
 
+    // 앱 설치 목록을 기반으로 보안 위험 요소 탐지 수행
     suspend fun scanInstalledApps(): List<DetectedApp> {
         val detectedApps = mutableListOf<DetectedApp>()
         val packageManager = context.packageManager
-        val installedPackages = packageManager.getInstalledPackages(0)
-
-        // 다운로드 폴더에 있는 APK 파일의 패키지명 추출
-        val downloadApkPackages = getDownloadedApkPackageNames()
+        val installedPackages = packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS or PackageManager.GET_SIGNING_CERTIFICATES)
 
         for (packageInfo in installedPackages) {
             val appName = packageInfo.applicationInfo?.loadLabel(packageManager)?.toString() ?: "Unknown App"
             val packageName = packageInfo.packageName
             val issues = mutableListOf<SecurityIssue>()
 
-            // 1. 공식 서명 확인
+            // 1. 서명 위조 확인
             if (config.officialSignatures.containsKey(packageName)) {
                 val officialSignature = config.officialSignatures[packageName]
                 val currentSignature = getAppSignature(packageName)
-
-                Log.d("SignatureCheck", "앱: $appName, 공식서명: $officialSignature, 현재서명: $currentSignature")
-
-                if (currentSignature != null && officialSignature != currentSignature) {
+                if (currentSignature != null && currentSignature != officialSignature) {
                     issues.add(SecurityIssue.TamperedSignature)
                 }
             }
 
-            // 2. 위험 권한 검사
+            // 2. 위험 권한 과다 보유 앱
             try {
-                val requestedPermissions = packageManager.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS)
-                    .requestedPermissions?.toSet() ?: emptySet()
+                val requestedPermissions = packageInfo.requestedPermissions?.toSet() ?: emptySet()
                 val dangerous = requestedPermissions.intersect(config.dangerousPermissions)
                 if (dangerous.size >= config.permissionThreshold) {
                     issues.add(SecurityIssue.DangerousPermissions(dangerous))
@@ -55,127 +43,49 @@ class SecurityScanner(private val context: Context, private val config: Security
                 Log.e("PermissionCheck", "$packageName 권한 확인 실패: ${e.message}")
             }
 
-            // 3. 해당 앱이 다운로드 폴더에 있는 APK로 설치된 경우
-            if (packageName in downloadApkPackages) {
-                issues.add(SecurityIssue.InstalledFromDownloadedApk)
+            // 3. 스토어 외 앱 설치 여부
+            val installer = packageManager.getInstallerPackageName(packageName)
+            if (installer == null ||
+                !(installer.contains("google") || installer.contains("samsung") || installer.contains("one") || installer.contains("market"))) {
+                issues.add(SecurityIssue.NonStoreInstallation)
             }
 
+            // 감지된 보안 이슈가 있을 경우 리스트에 추가
             if (issues.isNotEmpty()) {
                 detectedApps.add(DetectedApp(appName, packageName, issues))
             }
         }
 
-        val apkFiles = checkApkInDownloadFolder()
-        if (apkFiles.isNotEmpty()) {
-            detectedApps.add(
-                DetectedApp(
-                    appName = "Download Folder",
-                    packageName = "local.download.apk",
-                    issues = listOf(SecurityIssue.ApkInDownloadFolder(apkFiles))
-                )
-            )
-        }
-
         return detectedApps
     }
 
+    // 특정 앱의 서명(SHA-256) 해시값 반환
     private fun getAppSignature(packageName: String): String? {
         return try {
-            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                context.packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
-            }
-
+            val packageInfo = context.packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
             val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                packageInfo.signingInfo?.apkContentsSigners
+                packageInfo.signingInfo.apkContentsSigners
             } else {
                 @Suppress("DEPRECATION")
                 packageInfo.signatures
             }
-
-            signatures?.firstOrNull()?.let { signature ->
-                val certFactory = CertificateFactory.getInstance("X.509")
-                val cert = certFactory.generateCertificate(ByteArrayInputStream(signature.toByteArray())) as X509Certificate
-                val md = MessageDigest.getInstance("SHA-256")
-                val publicKey = md.digest(cert.encoded)
-                publicKey.joinToString("") { "%02X".format(it) }
-            }
+            val cert = signatures[0].toByteArray()
+            val md = MessageDigest.getInstance("SHA-256")
+            val hash = md.digest(cert)
+            hash.joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
-            Log.e("SignatureCheck", "서명을 가져오는 중 오류 발생: ${e.message}")
             null
         }
     }
 
-    private fun getDownloadedApkPackageNames(): Set<String> {
-        val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        return downloads?.listFiles()
-            ?.filter { it.extension == "apk" }
-            ?.mapNotNull { getPackageNameFromApk(it) }
-            ?.toSet() ?: emptySet()
-    }
-
-    private fun getPackageNameFromApk(apkFile: File): String? {
-        return try {
-            val pm = context.packageManager
-            val info = pm.getPackageArchiveInfo(apkFile.absolutePath, 0)
-            info?.applicationInfo?.let {
-                if (Build.VERSION.SDK_INT >= 8) {
-                    it.sourceDir = apkFile.absolutePath
-                    it.publicSourceDir = apkFile.absolutePath
-                }
-            }
-            info?.packageName
-        } catch (e: Exception) {
-            Log.e("APKScan", "APK에서 패키지명 추출 실패: ${e.message}")
-            null
-        }
-    }
+    // 다운로드 폴더 내 .apk 파일 목록 수집
     fun checkApkInDownloadFolder(): List<String> {
         val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val apkFiles = downloadDir.listFiles { file -> file.extension == "apk" } ?: return emptyList()
+        val apkFiles = downloadDir?.listFiles { file -> file.extension == "apk" } ?: return emptyList()
         return apkFiles.map { it.name }
     }
-    /**
-     * 개발자 옵션 메뉴 활성화 여부
-     */
-    fun isDeveloperOptionsMenuEnabled(): Boolean = try {
-        Settings.Global.getInt(
-            context.contentResolver,
-            Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
-            0
-        ) == 1
-    } catch (e: Settings.SettingNotFoundException) {
-        false
-    }
 
-    /**
-     * ADB 모드(개발자 옵션) 활성화 여부
-     */
-    fun isDeveloperOptionsEnabled(): Boolean = try {
-        Settings.Global.getInt(
-            context.contentResolver,
-            Settings.Global.ADB_ENABLED,
-            0
-        ) == 1
-    } catch (e: Settings.SettingNotFoundException) {
-        false
-    }
-
-    /**
-     * 알 수 없는 출처 설치 허용 여부
-     */
-    fun isUnknownSourcesAllowed(): Boolean =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.packageManager.canRequestPackageInstalls()
-        } else {
-            Settings.Secure.getInt(
-                context.contentResolver,
-                Settings.Secure.INSTALL_NON_MARKET_APPS,
-                0
-            ) == 1
-        }
+    // request_install_packages 권한이 허용된 앱 목록 (알 수 없는 출처 설치 허용 앱)
     fun getAllowedUnknownSourceApps(): List<String> {
         val pm = context.packageManager
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
@@ -190,4 +100,25 @@ class SecurityScanner(private val context: Context, private val config: Security
             .map { it.packageName }
     }
 
+    // 개발자 옵션 메뉴 활성화 여부 확인
+    fun isDeveloperOptionsMenuEnabled(): Boolean = try {
+        Settings.Global.getInt(
+            context.contentResolver,
+            Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
+            0
+        ) == 1
+    } catch (e: Settings.SettingNotFoundException) {
+        false
+    }
+
+    // ADB(USB 디버깅) 활성화 여부 확인
+    fun isAdbEnabled(): Boolean = try {
+        Settings.Global.getInt(
+            context.contentResolver,
+            Settings.Global.ADB_ENABLED,
+            0
+        ) == 1
+    } catch (e: Settings.SettingNotFoundException) {
+        false
+    }
 }

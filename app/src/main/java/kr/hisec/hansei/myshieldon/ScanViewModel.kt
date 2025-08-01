@@ -22,13 +22,9 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _uiState.value = ScanUiState.Scanning
             try {
-                // 1. 루팅 여부
                 val isRooted = RootCheckUtils.isDeviceRooted()
-
-                // 2. 스토어 외 설치 앱
                 val nonStoreApps = AppInfoUtils.getNonStoreInstalledApps(getApplication())
 
-                // 3. 보안 위협 앱 스캔
                 val config = SecurityConfig(
                     permissionThreshold = 3,
                     dangerousPermissions = setOf(
@@ -46,38 +42,52 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
 
                 val scanner = SecurityScanner(getApplication(), config)
                 val detectedApps = scanner.scanInstalledApps().toMutableList()
-                val allowedUnknownApps = scanner.getAllowedUnknownSourceApps()
 
-                // ① 개발자 옵션(ADB) 메뉴 활성화(잠재 위험)
-                if (scanner.isDeveloperOptionsMenuEnabled() && !scanner.isDeveloperOptionsEnabled()) {
+                // 개발자 옵션 메뉴
+                if (scanner.isDeveloperOptionsMenuEnabled()) {
                     detectedApps += DetectedApp(
-                        appName    = "설정: 개발자 옵션(ADB)",
-                        packageName= "android.settings",
-                        issues     = listOf(SecurityIssue.DeveloperOptionsAvailable)
+                        appName = "설정: 개발자 옵션 메뉴",
+                        packageName = "settings.devoptions",
+                        issues = listOf(SecurityIssue.DeveloperOptionsEnabled)
                     )
                 }
-                // ② ADB 모드 비활성화
-                if (!scanner.isDeveloperOptionsEnabled()) {
+
+                // ADB 모드
+                if (scanner.isAdbEnabled()) {
                     detectedApps += DetectedApp(
-                        appName    = "개발자 옵션(ADB)",
-                        packageName= "android.settings",
-                        issues     = listOf(SecurityIssue.DeveloperModeDisabled)
+                        appName = "설정: ADB 모드",
+                        packageName = "settings.adb",
+                        issues = listOf(SecurityIssue.AdbModeEnabled)
                     )
                 }
-                // ③ 알 수 없는 출처 허용 여부
-                if (scanner.isUnknownSourcesAllowed()) {
+
+                // 다운로드 폴더 내 APK 파일
+                val apkFiles = scanner.checkApkInDownloadFolder()
+                if (apkFiles.isNotEmpty()) {
                     detectedApps += DetectedApp(
-                        appName    = "설정: 알 수 없는 출처",
-                        packageName= "android.settings",
-                        issues     = listOf(SecurityIssue.UnsafeUnknownSources)
+                        appName = "내장 저장소",
+                        packageName = "local.download.apk",
+                        issues = listOf(SecurityIssue.ApkInDownloadFolder(apkFiles))
                     )
                 }
-                // 4. 백그라운드 과다 앱 수
+
+                // 알 수 없는 출처 허용 앱
+                val unknownSourceApps = scanner.getAllowedUnknownSourceApps()
+                unknownSourceApps.forEach { pkg ->
+                    val appName = pkg
+                    detectedApps += DetectedApp(
+                        appName = appName,
+                        packageName = pkg,
+                        issues = listOf(SecurityIssue.UnsafeUnknownSources)
+                    )
+                }
+
+                // 백그라운드 과다 사용 앱
                 val heavyCount = UsageStatsManagerUtil
                     .getHeavyUsageApps(getApplication())
                     .size
 
-                // 5. 운영체제 보안 패치 확인
+                // 보안 패치 날짜 확인
                 val patchDate = getSecurityPatchDate()
                 val isPatchOld = isPatchOutdated(patchDate)
                 if (isPatchOld) {
@@ -92,16 +102,15 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
 
-                // 최종 결과 전달
                 _uiState.value = ScanUiState.Success(
                     isRooted = isRooted,
                     nonStoreApps = nonStoreApps,
                     detectedApps = detectedApps,
                     backgroundOverUsageCount = heavyCount,
                     isDeveloperOptionsMenuEnabled = scanner.isDeveloperOptionsMenuEnabled(),
-                    isDeveloperOptionsEnabled     = scanner.isDeveloperOptionsEnabled(),
-                    isUnknownSourcesAllowed       = scanner.isUnknownSourcesAllowed(),
-                    allowedUnknownSourceApps = allowedUnknownApps
+                    isDeveloperOptionsEnabled = scanner.isAdbEnabled(),
+                    isUnknownSourcesAllowed = unknownSourceApps.isNotEmpty(),
+                    allowedUnknownSourceApps = unknownSourceApps
                 )
             } catch (e: Exception) {
                 _uiState.value = ScanUiState.Error("스캔 중 오류가 발생했습니다: ${e.message}")
