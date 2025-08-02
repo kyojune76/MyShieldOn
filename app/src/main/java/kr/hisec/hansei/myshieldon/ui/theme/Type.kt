@@ -2,33 +2,38 @@ package kr.hisec.hansei.myshieldon.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import kr.hisec.hansei.myshieldon.R
 
-// Set of Material typography styles to start with
+// 픽셀 폰트 등록
+val PixelFont = FontFamily(Font(R.font.neodgm))
+
+// Typography 전체에 적용
 val Typography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    )
-    /* Other default text styles to override
+    displayLarge = TextStyle(
+        fontFamily = PixelFont,
+        fontSize = 30.sp
+    ),
     titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
+        fontFamily = PixelFont,
+        fontSize = 22.sp
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = PixelFont,
+        fontSize = 16.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = PixelFont,
+        fontSize = 14.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = PixelFont,
+        fontSize = 18.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        fontFamily = PixelFont,
+        fontSize = 12.sp
     )
-    */
 )

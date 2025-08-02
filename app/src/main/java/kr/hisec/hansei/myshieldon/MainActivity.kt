@@ -27,7 +27,13 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
 
             MyShieldOnTheme {
-                NavHost(navController, startDestination = "main") {
+                NavHost(navController, startDestination = "entry") {
+                    // 1️⃣ Entry point 추가
+                    composable("entry") {
+                        EntryRouter()
+                    }
+
+                    // 2️⃣ 기존 Main 화면
                     composable("main") {
                         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                         LaunchedEffect(uiState) {
@@ -41,16 +47,15 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             onStartScanClick = {
                                 if (!UsageStatsManagerUtil.hasUsageStatsPermission(context)) {
-                                    // 권한이 없으면 설정 화면으로 유도
                                     UsageStatsManagerUtil.requestUsageStatsPermission(context)
                                 } else {
-                                    // 권한이 있으면 바로 스캔 시작
                                     viewModel.startSecurityScan()
                                 }
                             }
                         )
                     }
 
+                    // 3️⃣ 결과 화면
                     composable("result") {
                         ResultScreen(
                             viewModel = viewModel,
