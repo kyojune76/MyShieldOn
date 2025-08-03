@@ -28,7 +28,7 @@ fun ResultScreen(
     if (uiState is ScanUiState.Success) {
         val allDetected = (uiState as ScanUiState.Success).detectedApps.filter { it.issues.isNotEmpty() }
 
-        // 💡 이슈 한 번에 처리해서 O(n) 캐싱
+        //  이슈 한 번에 처리해서 O(n) 캐싱
         val issueTypes = allDetected.flatMap { it.issues }
         val issuesByType: Map<KClass<out SecurityIssue>, List<SecurityIssue>> = issueTypes.groupBy { it::class }
 

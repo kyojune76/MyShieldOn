@@ -4,65 +4,98 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kr.hisec.hansei.myshieldon.R
 
 @Composable
 fun MainScreen(onStartScanClick: () -> Unit) {
     val pixelFont = FontFamily(Font(R.font.neodgm))
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFEBD3C3)),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Color(0xFFEBD3C3))
     ) {
-        // 앱 타이틀
-        Text(
-            text = "My Shield On",
-            fontFamily = pixelFont,
-            fontSize = 24.sp,
-            color = Color(0xFF5C4330),
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // 강아지 + 방패 이미지
-        Image(
-            painter = painterResource(R.drawable.ic_dog_shield), // 본인 이미지에 맞게 교체
-            contentDescription = null,
+        // 상단 로고와 텍스트
+        Row(
             modifier = Modifier
-                .size(160.dp)
-                .padding(bottom = 16.dp)
-        )
+                .padding(start = 3.dp, top = 5.dp) // 적절한 패딩 값으로 수정
+                .align(Alignment.TopStart),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_sword_dog),
+                contentDescription = null,
+                modifier = Modifier.size(50.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp)) // 간격 조정
+            Text(
+                text = "My Shield On",
+                fontFamily = pixelFont,
+                fontSize = 40.sp,
+                color = Color(0xFF5C4330)
+            )
+        }
 
-        // 안내 문구
-        Text(
-            text = "클릭하세요!",
-            fontFamily = pixelFont,
-            fontSize = 16.sp,
-            color = Color(0xFF5C4330),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        // 설정 아이콘 (클릭 시 점검 시작)
-        Image(
-            painter = painterResource(R.drawable.ic_settings), // 설정 아이콘 이미지 교체
-            contentDescription = "설정",
+        // 중앙 콘텐츠 (강아지 이미지, 문구, 설정 아이콘)
+        Column(
             modifier = Modifier
-                .size(36.dp)
-                .clickable { onStartScanClick() }
-        )
+                .fillMaxSize(),
+
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 강아지 + 방패 이미지 (원형 배경 포함)
+            Box(
+                modifier = Modifier
+                    .size(250.dp) // 이미지와 원의 크기 조정
+                    .shadow(
+                        elevation = 4.dp, // 그림자 크기
+                        shape = CircleShape,
+                        spotColor = Color(0xE4E0E1).copy(alpha = 1.0f), // 그림자 색상 및 투명도
+                        ambientColor = Color(0xE4E0E1).copy(alpha = 1.0f) // 그림자 색상 및 투명도
+                    )
+                    .background(color = Color(0xFFE4E0E1), shape = CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_dog_shield),
+                    contentDescription = null,
+                    modifier = Modifier.size(250.dp)
+                        .offset(y = 30.dp)// 강아지 이미지 크기 (원 안에 맞춰서)
+                )
+            }
+
+            // 안내 문구
+            Text(
+                text = "클릭하세요!",
+                fontFamily = pixelFont,
+                fontSize = 28.sp,
+                color = Color(0xFF5C4330),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 20.dp, bottom = 32.dp)
+            )
+
+            // 설정 아이콘
+            Image(
+                painter = painterResource(R.drawable.ic_settings),
+                contentDescription = "설정",
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable { onStartScanClick() }
+            )
+        }
     }
 }

@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
                 NavHost(navController, startDestination = "entry") {
                     // 1️⃣ Entry point 추가
                     composable("entry") {
-                        EntryRouter()
+                        EntryRouter(navController = navController)
                     }
 
                     // 2️⃣ 기존 Main 화면
