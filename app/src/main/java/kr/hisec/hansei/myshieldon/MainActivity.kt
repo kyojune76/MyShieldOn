@@ -3,19 +3,24 @@ package kr.hisec.hansei.myshieldon
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.rememberNavController
 import kr.hisec.hansei.myshieldon.ui.theme.MainScreen
+import kr.hisec.hansei.myshieldon.ui.theme.LoadingScreen
 import kr.hisec.hansei.myshieldon.ui.theme.ResultScreen
 import kr.hisec.hansei.myshieldon.ui.theme.MyShieldOnTheme
-import kr.hisec.hansei.myshieldon.ui.theme.LoadingScreen
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,47 +32,71 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
 
             MyShieldOnTheme {
-                NavHost(navController, startDestination = "entry") {
-                    //  Entry point 추가
-                    composable("entry") {
-                        EntryRouter(navController = navController)
-                    }
-
-                    // 기존 Main 화면
-                    composable("main") {
-                        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-                        LaunchedEffect(uiState) {
-                            if (uiState is ScanUiState.Success || uiState is ScanUiState.Error) {
-                                navController.navigate("result") {
-                                    popUpTo("main") { inclusive = true }
-                                }
-                            }
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    NavHost(navController, startDestination = "entry") {
+                        // Entry point (MainGateScreen)
+                        composable("entry") {
+                            EntryRouter(navController = navController)
                         }
 
-                        MainScreen(
-                            onStartScanClick = {
-                                if (!UsageStatsManagerUtil.hasUsageStatsPermission(context)) {
-                                    UsageStatsManagerUtil.requestUsageStatsPermission(context)
-                                } else {
-                                    viewModel.startSecurityScan()
+                        // MainScreen
+                        composable("main") {
+                            MainScreen(
+                                onStartScanClick = {
+                                    if (!UsageStatsManagerUtil.hasUsageStatsPermission(context)) {
+                                        UsageStatsManagerUtil.requestUsageStatsPermission(context)
+                                    } else {
+                                        navController.navigate("loading")
+                                    }
+                                }
+                            )
+                        }
+
+                        composable("loading") {
+                            LaunchedEffect(Unit) {
+                                // 1. 스캔 시작
+                                viewModel.startSecurityScan()
+
+                                // 2. 스캔이 완료될 때까지 기다림
+                                //    (상태가 Success 또는 Error가 될 때까지)
+                                var done = false
+                                while (!done) {
+                                    val state = viewModel.uiState.value
+                                    if (state is ScanUiState.Success || state is ScanUiState.Error) {
+                                        done = true
+                                    }
+                                    delay(100) // ⬅️ 짧은 간격으로 상태 체크
+                                }
+
+                                // 3. 스캔이 완료된 후, 사용자에게 화면을 보여줄 최소 시간(1.5초)을 기다립니다.
+                                delay(1500)
+
+                                // 4. ResultScreen으로 이동합니다.
+                                navController.navigate("result") {
+                                    popUpTo("loading") { inclusive = true }
                                 }
                             }
-                        )
-                    }
-                    //로딩창
 
+                            LoadingScreen(
+                                onSettingsClick = {/*아직구현 못함*/}
+                            )
+                        }
 
-                    // 결과 화면
-                    composable("result") {
-                        ResultScreen(
-                            viewModel = viewModel,
-                            onGoBack = {
-                                viewModel.returnToIdle()
-                                navController.navigate("main") {
-                                    popUpTo("main") { inclusive = true }
+                        // ResultScreen
+                        composable("result") {
+                            ResultScreen(
+                                viewModel = viewModel,
+                                onGoBack = {
+                                    viewModel.returnToIdle()
+                                    navController.navigate("main") {
+                                        popUpTo("main") { inclusive = true }
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }

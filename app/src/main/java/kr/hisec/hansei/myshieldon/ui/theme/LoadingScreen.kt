@@ -84,7 +84,7 @@ fun LoadingScreen(onSettingsClick: () -> Unit) {
         ) {
             // 안내 문구 (변경됨)
             Text(
-                text = "취약점 탐색중!",
+                text = "취약점 찾는중!",
                 fontFamily = pixelFont,
                 fontSize = 20.sp,
                 color = Color(0xFF5C4330),
