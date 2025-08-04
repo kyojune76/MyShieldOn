@@ -15,7 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import kr.hisec.hansei.myshieldon.ui.theme.MainScreen
 import kr.hisec.hansei.myshieldon.ui.theme.ResultScreen
 import kr.hisec.hansei.myshieldon.ui.theme.MyShieldOnTheme
-
+import kr.hisec.hansei.myshieldon.ui.theme.LoadingScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,12 +28,12 @@ class MainActivity : ComponentActivity() {
 
             MyShieldOnTheme {
                 NavHost(navController, startDestination = "entry") {
-                    // 1️⃣ Entry point 추가
+                    //  Entry point 추가
                     composable("entry") {
                         EntryRouter(navController = navController)
                     }
 
-                    // 2️⃣ 기존 Main 화면
+                    // 기존 Main 화면
                     composable("main") {
                         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                         LaunchedEffect(uiState) {
@@ -54,8 +54,10 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
+                    //로딩창
 
-                    // 3️⃣ 결과 화면
+
+                    // 결과 화면
                     composable("result") {
                         ResultScreen(
                             viewModel = viewModel,
