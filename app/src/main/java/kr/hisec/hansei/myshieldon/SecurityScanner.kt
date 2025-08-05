@@ -9,6 +9,7 @@ import java.io.File
 import java.security.MessageDigest
 import android.provider.Settings
 import android.app.AppOpsManager
+import android.content.pm.ApplicationInfo
 
 class SecurityScanner(private val context: Context, private val config: SecurityConfig) {
 
@@ -44,9 +45,19 @@ class SecurityScanner(private val context: Context, private val config: Security
             }
 
             // 3. 스토어 외 앱 설치 여부
+            // 시스템 앱 필터링
+            val isSystemApp = (packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                    (packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+
+// 스토어 외 설치 감지
             val installer = packageManager.getInstallerPackageName(packageName)
-            if (installer == null ||
-                !(installer.contains("google") || installer.contains("samsung") || installer.contains("one") || installer.contains("market"))) {
+            val isFromStore = installer?.contains("google") == true ||
+                    installer?.contains("samsung") == true ||
+                    installer?.contains("one") == true ||
+                    installer?.contains("baidu") == true ||
+                    installer?.contains("market") == true
+
+            if (!isSystemApp && !isFromStore) {
                 issues.add(SecurityIssue.NonStoreInstallation)
             }
 

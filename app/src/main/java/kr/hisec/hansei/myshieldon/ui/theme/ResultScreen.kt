@@ -1,22 +1,28 @@
 package kr.hisec.hansei.myshieldon.ui.theme
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kr.hisec.hansei.myshieldon.DetectedApp
-import kr.hisec.hansei.myshieldon.ScanViewModel
-import kr.hisec.hansei.myshieldon.ScanUiState
-import kr.hisec.hansei.myshieldon.SecurityIssue
-import kr.hisec.hansei.myshieldon.ui.theme.WarningRed
-import kr.hisec.hansei.myshieldon.ui.theme.SuccessGreen
-import kotlin.reflect.KClass
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kr.hisec.hansei.myshieldon.*
+import androidx.compose.ui.zIndex
+import kr.hisec.hansei.myshieldon.R
 
 @Composable
 fun ResultScreen(
@@ -24,47 +30,150 @@ fun ResultScreen(
     onGoBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pixelFont = FontFamily(Font(R.font.neodgm))
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val showDetails = remember { mutableStateOf(false) }
 
-    if (uiState is ScanUiState.Success) {
-        val allDetected = (uiState as ScanUiState.Success).detectedApps.filter { it.issues.isNotEmpty() }
-
-        //  이슈 한 번에 처리해서 O(n) 캐싱
-        val issueTypes = allDetected.flatMap { it.issues }
-        val issuesByType: Map<KClass<out SecurityIssue>, List<SecurityIssue>> = issueTypes.groupBy { it::class }
-
-        val hasIssue = { type: KClass<out SecurityIssue> -> issuesByType.containsKey(type) }
-
-        val hasRoot = issueTypes.any { it.toString().contains("Root") }  // 루팅은 따로 예외
-
-        Column(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFEBD3C3))
+    ) {
+        // 상단 고정 로고
+        Row(
             modifier = Modifier
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
+                .padding(start = 8.dp, top = 10.dp)
+                .align(Alignment.TopStart)
+                .zIndex(1f),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val issueGroups = listOf(
-                Triple("개발자 옵션 메뉴", hasIssue(SecurityIssue.DeveloperOptionsEnabled::class), Pair("개발자 옵션 메뉴가 켜져 있습니다.", "개발자 옵션 메뉴가 꺼져 있습니다.")),
-                Triple("ADB 모드", hasIssue(SecurityIssue.AdbModeEnabled::class), Pair("ADB 모드가 켜져 있습니다.", "ADB 모드가 꺼져 있습니다.")),
-                Triple("다운로드 폴더 APK 파일", hasIssue(SecurityIssue.ApkInDownloadFolder::class), Pair("다운로드 폴더에 APK 파일이 존재합니다.", "다운로드 폴더에 APK 파일이 없습니다.")),
-                Triple("루팅 여부", hasRoot, Pair("루팅이 감지되었습니다.", "루팅이 감지되지 않았습니다.")),
-                Triple("스토어 외 설치 앱", hasIssue(SecurityIssue.NonStoreInstallation::class), Pair("공식 앱스토어 외 설치된 앱이 있습니다.", "모든 앱이 공식 스토어를 통해 설치되었습니다.")),
-                Triple("알 수 없는 출처 허용 앱", hasIssue(SecurityIssue.UnsafeUnknownSources::class), Pair("일부 앱이 알 수 없는 출처의 앱 설치를 허용하고 있습니다.", "알 수 없는 출처 허용 앱이 없습니다.")),
-                Triple("위험 권한 과다 보유 앱", hasIssue(SecurityIssue.DangerousPermissions::class), Pair("위험 권한을 과도하게 사용하는 앱이 감지되었습니다.", "위험 권한을 과도하게 사용하는 앱이 없습니다.")),
-                Triple("서명 위조 앱", hasIssue(SecurityIssue.TamperedSignature::class), Pair("공식 서명과 다른 앱이 감지되었습니다.", "서명이 위조된 앱은 감지되지 않았습니다.")),
-                Triple("보안 패치 상태", hasIssue(SecurityIssue.OsSecurityPatchOutdated::class), Pair("운영체제 보안 패치가 오래되었습니다.", "운영체제 보안 패치가 최신 상태입니다."))
+            Image(
+                painter = painterResource(R.drawable.ic_sword_dog),
+                contentDescription = null,
+                modifier = Modifier.size(45.dp)
             )
-
-            issueGroups.forEach { (title, isRisk, messages) ->
-                val (warn, safe) = messages
-                ResultBox(
-                    title = title,
-                    description = if (isRisk) warn else safe,
-                    boxColor = if (isRisk) WarningRed else SuccessGreen
-                )
-                Spacer(Modifier.height(16.dp))
-            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "My Shield On",
+                fontFamily = pixelFont,
+                fontSize = 45.sp,
+                color = Color(0xFF5C4330)
+            )
         }
-    } else {
-        Text("점검 결과를 불러오는 중입니다.")
+
+        if (uiState is ScanUiState.Success) {
+            val successState = uiState as ScanUiState.Success
+            val issueTypes = mutableSetOf<String>()
+
+            val groupedIssues = mutableMapOf<String, MutableList<String>>()
+
+            successState.detectedApps.forEach { app ->
+                app.issues.forEach { issue ->
+                    val type = when (issue) {
+                        is SecurityIssue.DeveloperOptionsEnabled -> "개발자 옵션 메뉴"
+                        is SecurityIssue.AdbModeEnabled -> "ADB 모드"
+                        is SecurityIssue.UnsafeUnknownSources -> "알 수 없는 출처 허용 앱"
+                        is SecurityIssue.NonStoreInstallation -> "스토어 외 앱 설치"
+                        is SecurityIssue.DangerousPermissions -> "위험 권한 과다 보유"
+                        is SecurityIssue.TamperedSignature -> "서명 위조 앱"
+                        is SecurityIssue.ApkInDownloadFolder -> "다운로드 경로 APK"
+                        is SecurityIssue.OsSecurityPatchOutdated -> "보안 패치 오래됨"
+                    }
+                    val detail = when (issue) {
+                        is SecurityIssue.DangerousPermissions -> "위험 권한: ${issue.permissions.joinToString()}"
+                        is SecurityIssue.ApkInDownloadFolder -> "APK 파일: ${issue.apkFiles.joinToString()}"
+                        is SecurityIssue.OsSecurityPatchOutdated -> "패치 날짜: ${issue.patchDate}"
+                        else -> app.appName
+                    }
+                    groupedIssues.getOrPut(type) { mutableListOf() }.add(detail)
+                    issueTypes += type
+                }
+            }
+
+            if (successState.isRooted) issueTypes += "루팅 감지"
+            if (successState.backgroundOverUsageCount > 0) issueTypes += "백그라운드 과다 사용"
+
+            val totalIssues = issueTypes.size
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(screenHeight / 2 - 125.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(250.dp)
+                        .shadow(4.dp, CircleShape)
+                        .background(Color(0xFFE4E0E1), CircleShape)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_hunting_dog),
+                        contentDescription = null,
+                        modifier = Modifier.size(220.dp).align(Alignment.Center)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                ResultBox(
+                    title = "취약점 요약",
+                    description = "총 ${totalIssues}개의 항목에서 취약점이 발견되었습니다.",
+                    boxColor = Color(0xFFFF5252)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { showDetails.value = !showDetails.value },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF26C6DA))
+                ) {
+                    Text(text = if (showDetails.value) "간단히 보기" else "보안 길잡이", fontFamily = pixelFont)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (showDetails.value) {
+                    if (successState.isRooted) {
+                        ResultBox("루팅 감지", "이 기기는 루팅된 상태입니다.", Color(0xFFEF9A9A))
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    if (successState.backgroundOverUsageCount > 0) {
+                        ResultBox(
+                            "백그라운드 과다 사용",
+                            "${successState.backgroundOverUsageCount}개의 앱이 과도하게 실행 중입니다.",
+                            Color(0xFFEF9A9A)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    groupedIssues.forEach { (title, items) ->
+                        ResultBox(
+                            title = "$title (${items.size}개)",
+                            description = items.joinToString("\n"),
+                            boxColor = Color(0xFFEF9A9A)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onGoBack,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("다시 점검", fontFamily = pixelFont)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        } else {
+            Text("점검 결과를 불러오는 중입니다.", modifier = Modifier.align(Alignment.Center))
+        }
     }
 }
 
@@ -77,9 +186,9 @@ fun ResultBox(title: String, description: String, boxColor: Color) {
         tonalElevation = 4.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = title, style = MaterialTheme.typography.titleMedium, color = Color.White)
+            Text(title, style = MaterialTheme.typography.titleMedium, color = Color.White)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = description, style = MaterialTheme.typography.bodyMedium, color = Color.White)
+            Text(description, style = MaterialTheme.typography.bodyMedium, color = Color.White)
         }
     }
 }
