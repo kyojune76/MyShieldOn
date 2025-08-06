@@ -2,26 +2,30 @@ package kr.hisec.hansei.myshieldon.ui.theme
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kr.hisec.hansei.myshieldon.*
-import androidx.compose.ui.zIndex
 import kr.hisec.hansei.myshieldon.R
 
 @Composable
@@ -39,7 +43,6 @@ fun ResultScreen(
             .fillMaxSize()
             .background(Color(0xFFEBD3C3))
     ) {
-        // 상단 고정 로고
         Row(
             modifier = Modifier
                 .padding(start = 8.dp, top = 10.dp)
@@ -64,7 +67,6 @@ fun ResultScreen(
         if (uiState is ScanUiState.Success) {
             val successState = uiState as ScanUiState.Success
             val issueTypes = mutableSetOf<String>()
-
             val groupedIssues = mutableMapOf<String, MutableList<String>>()
 
             successState.detectedApps.forEach { app ->
@@ -107,7 +109,12 @@ fun ResultScreen(
                 Box(
                     modifier = Modifier
                         .size(250.dp)
-                        .shadow(4.dp, CircleShape)
+                        .shadow(
+                            elevation = 16.dp,
+                            shape = CircleShape,
+                            spotColor = Color.Black.copy(alpha = 0.3f),
+                            ambientColor = Color.Black.copy(alpha = 0.5f)
+                        )
                         .background(Color(0xFFE4E0E1), CircleShape)
                 ) {
                     Image(
@@ -153,14 +160,23 @@ fun ResultScreen(
                     groupedIssues.forEach { (title, items) ->
                         ResultBox(
                             title = "$title (${items.size}개)",
-                            description = items.joinToString("\n"),
+                            description = items.joinToString("\\n"),
                             boxColor = Color(0xFFEF9A9A)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    // 안내 받기 버튼 (보안 길잡이 열렸을 때만 노출)
+                    Button(
+                        onClick = {}, // 클릭 동작 없음
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF26C6DA))
+                    ) {
+                        Text("안내 받기", fontFamily = pixelFont)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 Button(
                     onClick = onGoBack,
@@ -172,23 +188,54 @@ fun ResultScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         } else {
-            Text("점검 결과를 불러오는 중입니다.", modifier = Modifier.align(Alignment.Center))
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "점검 결과를 불러오는 중입니다.",
+                    fontFamily = pixelFont,
+                    fontSize = 18.sp,
+                    color = Color.DarkGray
+                )
+            }
         }
     }
 }
 
 @Composable
 fun ResultBox(title: String, description: String, boxColor: Color) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = boxColor,
-        shape = MaterialTheme.shapes.medium,
-        tonalElevation = 4.dp
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, boxColor, RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(12.dp))
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, color = Color.White)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(description, style = MaterialTheme.typography.bodyMedium, color = Color.White)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(boxColor)
+                .padding(12.dp)
+        ) {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(12.dp)
+        ) {
+            Text(
+                text = description,
+                fontSize = 14.sp,
+                color = boxColor
+            )
         }
     }
 }

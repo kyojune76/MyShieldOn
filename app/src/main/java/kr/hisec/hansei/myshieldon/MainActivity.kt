@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 // 3. 스캔이 완료된 후, 사용자에게 화면을 보여줄 최소 시간(1.5초)을 기다립니다.
-                                delay(1500)
+                                delay(4000)
 
                                 // 4. ResultScreen으로 이동합니다.
                                 navController.navigate("result") {

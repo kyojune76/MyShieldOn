@@ -57,7 +57,6 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-
     // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -71,7 +70,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
-
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.coil-kt:coil-gif:2.6.0")
     // 테스트
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

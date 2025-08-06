@@ -72,8 +72,8 @@ fun MainScreen(onStartScanClick: () -> Unit) {
                     painter = painterResource(R.drawable.ic_dog_shield),
                     contentDescription = null,
                     modifier = Modifier
-                        .size(220.dp)
-                        .offset(y = 30.dp) // ⬅️ 강아지 이미지에 직접 오프셋 적용
+                        .size(270.dp)
+
                         .align(Alignment.Center) // ⬅️ Box 내에서 중앙 정렬 (offset과 함께 사용 가능)
                 )
             }
