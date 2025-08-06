@@ -31,7 +31,8 @@ import kr.hisec.hansei.myshieldon.R
 @Composable
 fun ResultScreen(
     viewModel: ScanViewModel,
-    onGoBack: () -> Unit
+    onGoBack: () -> Unit,
+    onGuideClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pixelFont = FontFamily(Font(R.font.neodgm))
@@ -168,7 +169,7 @@ fun ResultScreen(
 
                     // 안내 받기 버튼 (보안 길잡이 열렸을 때만 노출)
                     Button(
-                        onClick = {}, // 클릭 동작 없음
+                        onClick = onGuideClick, // ✅ 여기에 연결!
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF26C6DA))
                     ) {

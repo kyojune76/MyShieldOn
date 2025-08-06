@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
@@ -20,6 +21,7 @@ import kr.hisec.hansei.myshieldon.ui.theme.MainScreen
 import kr.hisec.hansei.myshieldon.ui.theme.LoadingScreen
 import kr.hisec.hansei.myshieldon.ui.theme.ResultScreen
 import kr.hisec.hansei.myshieldon.ui.theme.MyShieldOnTheme
+import kr.hisec.hansei.myshieldon.ui.theme.SecurityGuide
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,9 +96,19 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate("main") {
                                         popUpTo("main") { inclusive = true }
                                     }
-                                }
+                                },
+                                        onGuideClick = {
+                                            navController.navigate("security_guide")
+                                        }
                             )
                         }
+                        composable("security_guide") {
+                            val state = viewModel.uiState.collectAsState().value
+                            if (state is ScanUiState.Success) {
+                                SecurityGuide(scanResult = state) // ✅ 전달
+                            }
+                        }
+
                     }
                 }
             }
