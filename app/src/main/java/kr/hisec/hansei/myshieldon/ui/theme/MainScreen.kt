@@ -42,7 +42,7 @@ fun MainScreen(onStartScanClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(1.dp))
             Text(
-                text = "My Shield On",
+                text = "MY SHIELD ON",
                 fontFamily = pixelFont,
                 fontSize = 45.sp,
                 color = Color(0xFF5C4330)
@@ -60,9 +60,9 @@ fun MainScreen(onStartScanClick: () -> Unit) {
                 modifier = Modifier
                     .size(250.dp)
                     .shadow(
-                        elevation = 4.dp,
+                        elevation = 20.dp,
                         shape = CircleShape,
-                        spotColor = Color.Black.copy(alpha = 0.5f),
+                        spotColor = Color.Black.copy(alpha = 0.3f),
                         ambientColor = Color.Black.copy(alpha = 0.5f)
                     )
                     .background(color = Color(0xFFE4E0E1), shape = CircleShape)
@@ -91,20 +91,16 @@ fun MainScreen(onStartScanClick: () -> Unit) {
             Text(
                 text = "클릭하세요!",
                 fontFamily = pixelFont,
-                fontSize = 20.sp,
+                fontSize = 28.sp,
                 color = Color(0xFF5C4330),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 20.dp)
+                modifier = Modifier.padding(bottom = 100.dp)
             )
 
             // 설정 아이콘
-            Image(
-                painter = painterResource(R.drawable.ic_settings),
-                contentDescription = "설정",
-                modifier = Modifier
-                    .size(38.dp)
 
-            )
+
+
         }
     }
 }

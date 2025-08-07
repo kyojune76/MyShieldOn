@@ -58,7 +58,7 @@ fun ResultScreen(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "My Shield On",
+                text = "MY SHIELD ON",
                 fontFamily = pixelFont,
                 fontSize = 45.sp,
                 color = Color(0xFF5C4330)
@@ -111,7 +111,7 @@ fun ResultScreen(
                     modifier = Modifier
                         .size(250.dp)
                         .shadow(
-                            elevation = 16.dp,
+                            elevation = 20.dp,
                             shape = CircleShape,
                             spotColor = Color.Black.copy(alpha = 0.3f),
                             ambientColor = Color.Black.copy(alpha = 0.5f)
@@ -125,7 +125,7 @@ fun ResultScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
                 ResultBox(
                     title = "취약점 요약",
@@ -209,7 +209,7 @@ fun ResultBox(title: String, description: String, boxColor: Color) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, boxColor, RoundedCornerShape(12.dp))
+            .border(2.dp, boxColor, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
     ) {
         Box(

@@ -1,5 +1,5 @@
 [versions]
-agp = "8.1.0" # ✅ Android Studio가 sync 중인 버전과 맞추기
+agp = "8.2.2" # ✅ Android Studio가 sync 중인 버전과 맞추기
 kotlin = "1.9.25" # Kotlin 2.0.0도 가능하긴 하나, 안정성 위해 맞춰주는 걸 추천
 coreKtx = "1.13.1"
 lifecycle = "2.8.2"

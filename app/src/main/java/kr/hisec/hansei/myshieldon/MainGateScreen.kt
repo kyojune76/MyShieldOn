@@ -73,7 +73,7 @@ fun MainGateScreen(
             )
             Spacer(modifier = Modifier.width(1.dp))
             Text(
-                text = "My Shield On",
+                text = "MY SHIELD ON",
                 fontFamily = pixelFont,
                 fontSize = 45.sp,
                 color = Color(0xFF5C4330)
