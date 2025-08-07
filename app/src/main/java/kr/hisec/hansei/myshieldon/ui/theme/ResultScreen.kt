@@ -86,6 +86,8 @@ fun ResultScreen(
                         is SecurityIssue.DangerousPermissions -> "위험 권한: ${issue.permissions.joinToString()}"
                         is SecurityIssue.ApkInDownloadFolder -> "APK 파일: ${issue.apkFiles.joinToString()}"
                         is SecurityIssue.OsSecurityPatchOutdated -> "패치 날짜: ${issue.patchDate}"
+                        is SecurityIssue.TamperedSignature -> "${app.appName} - 서명 위조 감지됨"
+
                         else -> app.appName
                     }
                     groupedIssues.getOrPut(type) { mutableListOf() }.add(detail)
