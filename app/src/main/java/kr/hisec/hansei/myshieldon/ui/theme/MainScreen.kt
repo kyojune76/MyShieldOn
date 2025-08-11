@@ -87,7 +87,7 @@ fun MainScreen(onStartScanClick: () -> Unit) {
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 안내 문구
+            // 안내 문구 클릭하세요
             Text(
                 text = "클릭하세요!",
                 fontFamily = pixelFont,
