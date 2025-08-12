@@ -163,7 +163,7 @@ fun ResultScreen(
                     groupedIssues.forEach { (title, items) ->
                         ResultBox(
                             title = "$title (${items.size}개)",
-                            description = items.joinToString("\\n"),
+                            description = items.joinToString("\n"),
                             boxColor = Color(0xFFEF9A9A)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
