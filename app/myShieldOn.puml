@@ -1,0 +1,90 @@
+@startuml
+' === Vertical layout & style ===
+top to bottom direction
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor black
+skinparam defaultFontColor black
+skinparam packageStyle rectangle
+skinparam ClassAttributeIconSize 0
+hide methods
+hide fields
+skinparam nodesep 50
+skinparam ranksep 50
+scale 1.6
+
+title MyShieldOn Architecture (Vertical Layout, with UI)
+
+' ---------------- UI ----------------
+package "UI (Screens/Composables)" {
+  class MainScreen
+  class LoadingScreen
+  class ResultScreen
+  class SecurityGuide
+}
+
+' -------------- App --------------
+package "App" {
+  class MainActivity
+  class EntryRouter
+  class MainGateScreen
+}
+
+' ----------- Navigation ----------
+package "Navigation" {
+  interface NavHost
+  interface NavController
+}
+
+' ---- Presentation (VM/State) ----
+package "Presentation (ViewModel/State)" {
+  class ScanViewModel
+  class ScanUiState
+}
+
+' -------- Domain (Security) -------
+package "Domain (Security)" {
+  class SecurityScanner
+  class SecurityConfig
+  class SecurityIssue
+  class DetectedApp
+}
+
+' ---------- Utils/Data ----------
+package "Utils / System" {
+  class RootCheckUtils
+  class UsageStatsManagerUtil
+  class AppInfoUtils
+}
+
+' ========== Relations ==========
+' App → UI/Navigation
+MainActivity --> NavHost
+MainActivity --> NavController
+MainActivity --> EntryRouter : composable("entry")
+EntryRouter --> MainGateScreen : decide intro/main
+MainGateScreen --> MainScreen : onDone()
+
+' UI ↔ Presentation
+MainScreen --> ScanViewModel : startSecurityScan()
+LoadingScreen --> ScanViewModel : observe progress
+ResultScreen --> ScanViewModel : observe(state)
+ScanViewModel --> ScanUiState : sets Success/Error
+
+' Presentation ↔ Domain/Utils
+ScanViewModel --> SecurityScanner : scanInstalledApps()
+ScanViewModel --> SecurityConfig : build config
+ScanViewModel --> RootCheckUtils : isDeviceRooted()
+ScanViewModel --> UsageStatsManagerUtil : getHeavyUsageApps()
+ScanViewModel --> AppInfoUtils : installer/permissions
+
+' Domain 결과
+SecurityScanner --> DetectedApp : returns list
+SecurityScanner --> SecurityIssue : compose issues
+
+' UI에서 도메인 결과 소비
+ResultScreen --> SecurityIssue
+SecurityGuide --> SecurityIssue
+
+@enduml
