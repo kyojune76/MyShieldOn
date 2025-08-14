@@ -30,28 +30,20 @@ fun MainGateScreen(
     val context = LocalContext.current // ⬅️ LocalContext를 사용하여 Context 가져오기
 
     val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-    val lastLoginTimeMillis = sharedPreferences.getLong("last_login_time", 0L)
+    val lastEntry = sharedPreferences.getLong("last_login_time", 0L)
 
-    // 현재 접속 시간을 SharedPreferences에 저장
-    LaunchedEffect(Unit) {
-        val editor = sharedPreferences.edit()
-        editor.putLong("last_login_time", System.currentTimeMillis())
-        editor.apply()
-
-        delay(5000)
-        onDone()
-    }
-
-    val timeText = if (lastLoginTimeMillis == 0L) {
-        "처음 접속했습니다"
-    } else {
-        val timeDifferenceMinutes = (System.currentTimeMillis() - lastLoginTimeMillis) / (1000 * 60)
-        if (timeDifferenceMinutes < 60) {
-            "보안 탐색을 한시간 이내에 떠났습니다"
-        } else {
-            val hours = timeDifferenceMinutes / 60
-            "보안 탐색을 떠나지 않으신지 ${hours}시간 지났습니다"
+    val timeText =
+        if (lastEntry == 0L) "처음 접속했습니다"
+        else {
+            val min = (System.currentTimeMillis() - lastEntry) / (1000 * 60)
+            if (min < 60) "보안 탐색을 한시간 이내에 떠났습니다"
+            else "보안 탐색을 떠나지 않으신지 \n ${min / 60}시간 지났습니다"
         }
+
+    // ⏳ 대문 노출 시간만 책임
+    LaunchedEffect(Unit) {
+        delay(5000)      // 3~5초 원하는 값
+        onDone()         // 저장+네비는 EntryRouter에서
     }
 
     Box(
