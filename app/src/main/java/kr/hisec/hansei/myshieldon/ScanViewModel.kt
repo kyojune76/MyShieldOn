@@ -83,9 +83,17 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 // 백그라운드 과다 사용 앱
-                val heavyCount = UsageStatsManagerUtil
+                val heavyUsagePackages = UsageStatsManagerUtil
                     .getHeavyUsageApps(getApplication())
-                    .size
+                    .toList()
+                val heavyCount = heavyUsagePackages.size
+                if (heavyUsagePackages.isNotEmpty()) {
+                    detectedApps += DetectedApp(
+                        appName = "과다 실행 앱",
+                        packageName = "usage.heavy",
+                        issues = listOf(SecurityIssue.BackgroundOverUsage(heavyUsagePackages))
+                    )
+                }
 
                 // 보안 패치 날짜 확인
                 val patchDate = getSecurityPatchDate()

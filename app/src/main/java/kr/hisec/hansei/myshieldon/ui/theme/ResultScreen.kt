@@ -81,13 +81,15 @@ fun ResultScreen(
                         is SecurityIssue.TamperedSignature -> "서명 위조 앱"
                         is SecurityIssue.ApkInDownloadFolder -> "다운로드 경로 APK"
                         is SecurityIssue.OsSecurityPatchOutdated -> "보안 패치 오래됨"
+                        is SecurityIssue.BackgroundOverUsage -> "백그라운드 과다 사용"
                     }
                     val detail = when (issue) {
                         is SecurityIssue.DangerousPermissions -> "위험 권한: ${issue.permissions.joinToString()}"
                         is SecurityIssue.ApkInDownloadFolder -> "APK 파일: ${issue.apkFiles.joinToString()}"
                         is SecurityIssue.OsSecurityPatchOutdated -> "패치 날짜: ${issue.patchDate}"
                         is SecurityIssue.TamperedSignature -> "${app.appName} - 서명 위조 감지됨"
-
+                        is SecurityIssue.BackgroundOverUsage ->  // ✅ 여기가 핵심
+                            "과다 실행 앱: ${issue.packageNames.joinToString()}"
                         else -> app.appName
                     }
                     groupedIssues.getOrPut(type) { mutableListOf() }.add(detail)

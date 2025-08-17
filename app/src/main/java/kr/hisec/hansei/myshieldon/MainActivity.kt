@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
                                 viewModel.startSecurityScan()
 
                                 // 2. 스캔이 완료될 때까지 기다림
-                                //    (상태가 Success 또는 Error가 될 때까지)
+
                                 var done = false
                                 while (!done) {
                                     val state = viewModel.uiState.value
@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
                             }
 
                             LoadingScreen(
-                                onSettingsClick = {/*아직구현 못함*/}
+                                onSettingsClick = {}
                             )
                         }
 
@@ -105,7 +105,7 @@ class MainActivity : ComponentActivity() {
                         composable("security_guide") {
                             val state = viewModel.uiState.collectAsState().value
                             if (state is ScanUiState.Success) {
-                                SecurityGuide(scanResult = state) // ✅ 전달
+                                SecurityGuide(scanResult = state)
                             }
                         }
 

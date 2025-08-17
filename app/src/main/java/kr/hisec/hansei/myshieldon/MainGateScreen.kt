@@ -22,29 +22,31 @@ import java.util.concurrent.TimeUnit
 import androidx.compose.ui.platform.LocalContext // ⬅️ LocalContext import
 
 @Composable
-fun MainGateScreen(
-    onDone: () -> Unit // ⬅️ Context 인자 제거
-) {
+fun MainGateScreen(onDone: () -> Unit) {
     val pixelFont = FontFamily(Font(R.font.neodgm))
+    val context = LocalContext.current
 
-    val context = LocalContext.current // ⬅️ LocalContext를 사용하여 Context 가져오기
 
-    val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-    val lastEntry = sharedPreferences.getLong("last_login_time", 0L)
+    val prefs = context.getSharedPreferences("entry_prefs", Context.MODE_PRIVATE)
+    val lastEntry = prefs.getLong("last_entry_time", 0L)
 
-    val timeText =
-        if (lastEntry == 0L) "처음 접속했습니다"
-        else {
-            val min = (System.currentTimeMillis() - lastEntry) / (1000 * 60)
-            if (min < 60) "보안 탐색을 한시간 이내에 떠났습니다"
-            else "보안 탐색을 떠나지 않으신지 \n ${min / 60}시간 지났습니다"
+    // 접속시간 차 계산
+    val timeText = when {
+        lastEntry == 0L -> "처음 접속했습니다"
+        else -> {
+            val diffMin = (System.currentTimeMillis() - lastEntry) / (1000 * 60)
+            if (diffMin < 60) "한 시간 이내에 접속하셨습니다"
+            else "보안 탐색을 떠나지 않으신지\n ${diffMin / 60}시간 지났습니다"
         }
-
-    // ⏳ 대문 노출 시간만 책임
-    LaunchedEffect(Unit) {
-        delay(5000)      // 3~5초 원하는 값
-        onDone()         // 저장+네비는 EntryRouter에서
     }
+
+    // 화면이 찍힌 순간 현재 시각을 저장 → 다음 실행 때 비교 기준이 됨
+    LaunchedEffect(Unit) {
+        prefs.edit().putLong("last_entry_time", System.currentTimeMillis()).apply()
+        delay(4000)
+        onDone()
+    }
+
 
     Box(
         modifier = Modifier

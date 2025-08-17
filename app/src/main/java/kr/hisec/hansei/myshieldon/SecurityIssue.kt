@@ -10,4 +10,5 @@ sealed class SecurityIssue {
     object TamperedSignature : SecurityIssue()
     data class ApkInDownloadFolder(val apkFiles: List<String>) : SecurityIssue()
     data class OsSecurityPatchOutdated(val patchDate: String) : SecurityIssue()
+    data class BackgroundOverUsage(val packageNames: List<String>) : SecurityIssue()
 }

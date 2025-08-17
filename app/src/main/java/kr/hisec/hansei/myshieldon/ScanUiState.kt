@@ -1,8 +1,8 @@
 package kr.hisec.hansei.myshieldon
 
-/**
- * 보안 점검 상태를 나타내는 UI 상태 클래스
- */
+
+ //보안 점검 상태를 나타내는 UI 상태 클래스
+
 sealed class ScanUiState {
     object Idle : ScanUiState()
     object Scanning : ScanUiState()
@@ -17,11 +17,12 @@ sealed class ScanUiState {
         val isRooted: Boolean,
         val nonStoreApps: List<String>,
         val detectedApps: List<DetectedApp>,
-        val backgroundOverUsageCount: Int,  // new!
-        val isDeveloperOptionsMenuEnabled: Boolean,      // ← 추가
-        val isDeveloperOptionsEnabled: Boolean,          // ← 추가
+        val backgroundOverUsageCount: Int,
+        val isDeveloperOptionsMenuEnabled: Boolean,
+        val isDeveloperOptionsEnabled: Boolean,
         val isUnknownSourcesAllowed: Boolean,
-        val allowedUnknownSourceApps: List<String> = emptyList()
+        val allowedUnknownSourceApps: List<String> = emptyList(),
+
     ) : ScanUiState()
 
     data class Error(val message: String) : ScanUiState()

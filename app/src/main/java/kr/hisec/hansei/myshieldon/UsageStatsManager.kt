@@ -30,9 +30,8 @@ object UsageStatsManagerUtil {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    /**
-     * Usage Access 권한 설정 화면으로 이동시킵니다.
-     */
+    // Usage Access 권한 설정 화면으로 이동시킵니다.
+
     fun requestUsageStatsPermission(context: Context) {
         context.startActivity(
             Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
@@ -41,10 +40,10 @@ object UsageStatsManagerUtil {
         )
     }
 
-    /**
-     * 지난 dayCount 일 동안 포그라운드 사용시간이 THRESHOLD_MS 이상인 앱 패키지 리스트 반환.
-     * 권한이 없으면 빈 집합을 반환합니다.
-     */
+
+     // 지난 dayCount 일 동안 포그라운드 사용시간이 THRESHOLD_MS 이상인 앱 패키지 리스트 반환.
+
+
     fun getHeavyUsageApps(context: Context, dayCount: Long = 1): Set<String> {
         if (!hasUsageStatsPermission(context)) return emptySet()
 

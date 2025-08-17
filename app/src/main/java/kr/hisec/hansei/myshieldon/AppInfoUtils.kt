@@ -4,9 +4,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 
-/**
- * 앱 설치 정보 분석 유틸리티 함수들을 제공하는 싱글톤 객체.
- */
+
 object AppInfoUtils {
 
     /**

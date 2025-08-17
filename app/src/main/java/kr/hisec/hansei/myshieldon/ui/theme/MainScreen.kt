@@ -49,8 +49,8 @@ fun MainScreen(onStartScanClick: () -> Unit) {
             )
         }
 
-        // 중앙 콘텐츠 (강아지 이미지, 문구, 설정 아이콘)
-        // Column이 아닌 Box를 사용해서 원형 박스를 화면 중앙에 배치
+        // 중앙 콘텐츠 (강아지 이미지, 문구)
+
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -97,7 +97,7 @@ fun MainScreen(onStartScanClick: () -> Unit) {
                 modifier = Modifier.padding(bottom = 100.dp)
             )
 
-            // 설정 아이콘
+
 
 
 

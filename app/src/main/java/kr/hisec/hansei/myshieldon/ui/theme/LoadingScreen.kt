@@ -39,7 +39,7 @@ fun LoadingScreen(onSettingsClick: () -> Unit) {
             .fillMaxSize()
             .background(Color(0xFFEBD3C3))
     ) {
-        // ✅ 상단 로고와 텍스트 (원래대로 복구)
+        //  상단 로고와 텍스트 (원래대로 복구)
         Row(
             modifier = Modifier
                 .padding(start = 3.dp, top = 5.dp)
@@ -60,7 +60,7 @@ fun LoadingScreen(onSettingsClick: () -> Unit) {
             )
         }
 
-        // ✅ 중앙 원형 박스 안에 걷는 애니메이션 (gif)
+        //  중앙 원형 박스 안에 걷는 애니메이션 (gif)
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -89,7 +89,7 @@ fun LoadingScreen(onSettingsClick: () -> Unit) {
             }
         }
 
-        // ✅ 하단 문구 및 설정 아이콘
+        //  하단 문구 및 설정 아이콘
         Column(
             modifier = Modifier
                 .fillMaxSize()

@@ -1,8 +1,9 @@
 package kr.hisec.hansei.myshieldon
-
+//루팅여부 체크
 import android.os.Build
 import java.io.File
 
+//test-keys, busybox, su, rw경로 체크
 object RootCheckUtils {
     fun isDeviceRooted(): Boolean {
         return checkForSuBinary() || detectTestKeys() || checkForBusyBox() || checkSuExists() || checkForRWPaths()
