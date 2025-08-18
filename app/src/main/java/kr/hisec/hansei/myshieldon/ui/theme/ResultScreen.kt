@@ -88,9 +88,20 @@ fun ResultScreen(
                         is SecurityIssue.ApkInDownloadFolder -> "APK 파일: ${issue.apkFiles.joinToString()}"
                         is SecurityIssue.OsSecurityPatchOutdated -> "패치 날짜: ${issue.patchDate}"
                         is SecurityIssue.TamperedSignature -> "${app.appName} - 서명 위조 감지됨"
-                        is SecurityIssue.BackgroundOverUsage ->  // ✅ 여기가 핵심
-                            "과다 실행 앱: ${issue.packageNames.joinToString()}"
-                        else -> app.appName
+                        is SecurityIssue.BackgroundOverUsage -> {
+                            val lines = issue.packageNames.map { pkg ->
+                                pkg.substringAfterLast('.') // 예: com.google.android.youtube → youtube
+                            }
+                            "과다 실행 앱:\n${lines.joinToString(separator = "\n")}"
+                        }
+                        else ->{
+                            if (app.appName=="MyShieldOn"){
+                                "${app.appName}(신뢰할 수 있는앱입니다)"
+                            }else{
+                                app.appName
+                            }
+                        }
+
                     }
                     groupedIssues.getOrPut(type) { mutableListOf() }.add(detail)
                     issueTypes += type
@@ -154,14 +165,7 @@ fun ResultScreen(
                         ResultBox("루팅 감지", "이 기기는 루팅된 상태입니다.", Color(0xFFEF9A9A))
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                    if (successState.backgroundOverUsageCount > 0) {
-                        ResultBox(
-                            "백그라운드 과다 사용",
-                            "${successState.backgroundOverUsageCount}개의 앱이 과도하게 실행 중입니다.",
-                            Color(0xFFEF9A9A)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
+
                     groupedIssues.forEach { (title, items) ->
                         ResultBox(
                             title = "$title (${items.size}개)",
@@ -236,11 +240,17 @@ fun ResultBox(title: String, description: String, boxColor: Color) {
                 .background(Color.White)
                 .padding(12.dp)
         ) {
-            Text(
-                text = description,
-                fontSize = 14.sp,
-                color = boxColor
-            )
+            Column {
+                description.lines().forEach { line ->
+                    val isMyShield = line.contains("MyShieldOn")
+                    Text(
+                        text = line,
+                        fontSize = 14.sp,
+                        color = if (isMyShield) Color(0xFF4CAF50) else boxColor,
+                        fontFamily = FontFamily(Font(R.font.neodgm))
+                    )
+                }
         }
     }
+}
 }
